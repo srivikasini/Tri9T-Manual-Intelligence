@@ -45,15 +45,22 @@ Run the 30-test automated pytest suite:
 ```
 Expected output: **30 passed in ~3s** with 100% pass rate.
 
-### 5. Launch the REST API Server
+### 5. Launch the Platform & View the Frontend Dashboard
 Start the FastAPI server:
 ```powershell
 .\.venv\Scripts\uvicorn.exe app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
-Once running, open your browser to:
-- **Interactive Swagger Documentation**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+Once the server is running, open your web browser to:
+- **🎨 Interactive Web Dashboard (Frontend)**: [http://127.0.0.1:8000/dashboard](http://127.0.0.1:8000/dashboard)
+  - **1. Document Explorer**: Full hierarchical tree navigation, real-time keyword/error-code search, and extracted tables viewer.
+  - **2. Version Diff & Comparison**: Cross-version AST change detection with line-level syntax-highlighted unified diffs (green/red) and filter buttons.
+  - **3. Selections & QA Generator**: Dropdown to view pre-seeded QA suites or generate new grounded test cases with strict schema validation.
+  - **4. Staleness & Impact Engine**: Continuous audit of test suites against revision manuals with inline drift diffs.
+- **⚡ Interactive Swagger API Documentation**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 - **ReDoc Documentation**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 - **Health Check**: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
+
+> **💡 Note for Reviewers**: The links above run on your local machine (`127.0.0.1:8000`). Start the server with `uvicorn app.main:app --reload` in your terminal first, then open `http://127.0.0.1:8000/dashboard` in your browser.
 
 ---
 
@@ -130,6 +137,7 @@ Tri9T-Manual-Intelligence/
 │   ├── llm/            # BaseLLMProvider, MockLLMProvider, LiveHTTPLLMProvider, validator
 │   ├── staleness/      # Staleness & impact severity analysis engine
 │   ├── api/            # FastAPI route handlers for all capabilities
+│   ├── static/         # Interactive Single-Page Dashboard (dashboard.html)
 │   ├── main.py         # FastAPI application entrypoint
 │   └── cli.py          # Command-line interface tool
 ├── data/
