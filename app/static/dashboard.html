@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tri9T Manual Intelligence Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .diff-del { background-color: #fee2e2; color: #991b1b; }
+    .diff-add { background-color: #dcfce7; color: #166534; }
+    .diff-hunk { background-color: #f1f5f9; color: #475569; }
+    pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+  <!-- Top Navigation -->
+  <header class="bg-indigo-950 text-white shadow-lg sticky top-0 z-50 border-b border-indigo-800/50">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center font-extrabold text-xl tracking-wider shadow-inner">9T</div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-xl font-bold tracking-tight">Tri9T Manual Intelligence Platform</h1>
+            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-indigo-800 text-indigo-200 border border-indigo-700">v1.0.0</span>
+          </div>
+          <p class="text-xs text-indigo-300">Layout Extraction • Hierarchical Diffing • Grounded QA Synthesis • Staleness Engine</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <a href="/docs" target="_blank" class="px-3.5 py-1.5 rounded-lg bg-indigo-800/80 hover:bg-indigo-700 text-xs font-semibold tracking-wide border border-indigo-600/70 transition flex items-center space-x-1.5 shadow-xs">
+          <span>⚡ Interactive Swagger API</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        </a>
+        <div class="flex items-center space-x-2 pl-2 border-l border-indigo-800">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-xs font-semibold text-emerald-300">All 9 Capabilities Active</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Primary Tabs -->
+    <div class="flex space-x-2 border-b border-slate-200 mb-8 pb-px">
+      <button onclick="switchTab('explorer')" id="tab-explorer" class="px-5 py-3 font-semibold text-sm border-b-2 border-indigo-600 text-indigo-600 focus:outline-none transition flex items-center space-x-2">
+        <span>📖 1. Document Explorer</span>
+      </button>
+      <button onclick="switchTab('diff')" id="tab-diff" class="px-5 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 focus:outline-none transition flex items-center space-x-2">
+        <span>🔄 2. Version Diff & Comparison</span>
+        <span id="diff-tab-badge" class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">5 Changes</span>
+      </button>
+      <button onclick="switchTab('qa')" id="tab-qa" class="px-5 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 focus:outline-none transition flex items-center space-x-2">
+        <span>🎯 3. Selections & QA Generator</span>
+      </button>
+      <button onclick="switchTab('staleness')" id="tab-staleness" class="px-5 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 focus:outline-none transition flex items-center space-x-2">
+        <span>⚠️ 4. Staleness & Impact Engine</span>
+        <span id="staleness-tab-badge" class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800">2 Stale</span>
+      </button>
+    </div>
+
+    <!-- ==================== 1. EXPLORER TAB ==================== -->
+    <div id="view-explorer" class="space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <div class="flex flex-wrap items-center gap-3">
+          <label class="text-sm font-semibold text-slate-700">Document Version:</label>
+          <select id="explorer-version" onchange="loadSections()" class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
+            <option value="v1">v1 (ct200_manual.pdf - 6 pages, 27 nodes)</option>
+            <option value="v2">v2 (ct200_manual_v2.pdf - 7 pages, 28 nodes)</option>
+          </select>
+          <button onclick="loadSections()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition">Reload</button>
+        </div>
+        
+        <!-- Live Search Bar -->
+        <div class="flex items-center space-x-3 w-full md:w-auto">
+          <div class="relative w-full md:w-80">
+            <input type="text" id="explorer-search" oninput="filterExplorerNodes(this.value)" placeholder="🔍 Search text or error codes (e.g. E03, battery)..." class="w-full pl-3 pr-8 py-1.5 border border-slate-300 rounded-lg text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
+            <button onclick="document.getElementById('explorer-search').value=''; filterExplorerNodes('');" class="absolute right-2.5 top-1.5 text-slate-400 hover:text-slate-600 text-xs">✕</button>
+          </div>
+          <div class="text-xs text-slate-500 shrink-0" id="explorer-status">Loading sections...</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Sidebar Sections List -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[700px]">
+          <div class="p-3 bg-slate-100 border-b border-slate-200 font-semibold text-xs text-slate-600 uppercase tracking-wider flex items-center justify-between">
+            <span>Hierarchy & Subsections</span>
+            <span id="sidebar-count" class="text-[11px] text-slate-500 font-mono">27 nodes</span>
+          </div>
+          <div id="sections-list" class="divide-y divide-slate-100 overflow-y-auto flex-1"></div>
+        </div>
+
+        <!-- Section Detail Viewer -->
+        <div class="md:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-6 overflow-y-auto h-[700px]" id="section-detail">
+          <div class="text-center text-slate-400 py-28">Select a section on the left to inspect its extracted text, child subsections, and parsed tables.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 2. VERSION DIFF TAB ==================== -->
+    <div id="view-diff" class="hidden space-y-6">
+      <!-- Diff Top Control Bar -->
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <h2 class="text-lg font-bold text-slate-900">Cross-Version Change Detection Engine</h2>
+            <span class="text-xs px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-semibold border border-indigo-200">Hierarchical AST Differ</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">Computes cryptographic hash drift, structural additions/removals, and line-level unified diffs across versions without mutating history.</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <div class="flex items-center space-x-2 bg-slate-100 p-1.5 rounded-lg border border-slate-200 text-xs">
+            <span class="font-medium text-slate-600">Base:</span>
+            <select id="diff-base-version" class="bg-white px-2 py-1 rounded border border-slate-300 font-semibold">
+              <option value="v1" selected>v1 (6p)</option>
+              <option value="v2">v2 (7p)</option>
+            </select>
+            <span class="font-medium text-slate-600">→ Target:</span>
+            <select id="diff-target-version" class="bg-white px-2 py-1 rounded border border-slate-300 font-semibold">
+              <option value="v2" selected>v2 (7p)</option>
+              <option value="v1">v1 (6p)</option>
+            </select>
+          </div>
+          <button onclick="loadDiff()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition flex items-center space-x-1.5 shadow-xs">
+            <span>⚡ Run Comparison</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Diff Summary Metrics Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-6 gap-3" id="diff-summary-cards">
+        <div onclick="filterDiff('all')" class="bg-white p-3.5 rounded-xl border border-slate-200 cursor-pointer hover:border-indigo-400 transition text-center shadow-xs">
+          <span class="text-xs font-semibold text-slate-500">Total Evaluated</span>
+          <div class="text-2xl font-black text-slate-800 mt-1" id="count-total">-</div>
+          <span class="text-[10px] text-slate-400">All Nodes</span>
+        </div>
+        <div onclick="filterDiff('changed')" class="bg-gradient-to-br from-amber-50 to-orange-50 p-3.5 rounded-xl border-2 border-amber-400 cursor-pointer hover:shadow-md transition text-center shadow-xs">
+          <span class="text-xs font-bold text-amber-800">🔥 Changes</span>
+          <div class="text-2xl font-black text-amber-900 mt-1" id="count-changed">-</div>
+          <span class="text-[10px] text-amber-700 font-medium">Modified + Added</span>
+        </div>
+        <div onclick="filterDiff('MODIFIED')" class="bg-white p-3.5 rounded-xl border border-amber-200 bg-amber-50/20 cursor-pointer hover:border-amber-400 transition text-center shadow-xs">
+          <span class="text-xs font-semibold text-amber-700">Modified</span>
+          <div class="text-2xl font-black text-amber-700 mt-1" id="count-modified">-</div>
+          <span class="text-[10px] text-amber-600">Content Drift</span>
+        </div>
+        <div onclick="filterDiff('ADDED')" class="bg-white p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/20 cursor-pointer hover:border-emerald-400 transition text-center shadow-xs">
+          <span class="text-xs font-semibold text-emerald-700">Added</span>
+          <div class="text-2xl font-black text-emerald-700 mt-1" id="count-added">-</div>
+          <span class="text-[10px] text-emerald-600">New Sections</span>
+        </div>
+        <div onclick="filterDiff('REMOVED')" class="bg-white p-3.5 rounded-xl border border-rose-200 bg-rose-50/20 cursor-pointer hover:border-rose-400 transition text-center shadow-xs">
+          <span class="text-xs font-semibold text-rose-700">Removed</span>
+          <div class="text-2xl font-black text-rose-700 mt-1" id="count-removed">0</div>
+          <span class="text-[10px] text-rose-600">Deleted Nodes</span>
+        </div>
+        <div onclick="filterDiff('UNCHANGED')" class="bg-white p-3.5 rounded-xl border border-slate-200 cursor-pointer hover:border-slate-400 transition text-center shadow-xs">
+          <span class="text-xs font-semibold text-slate-600">Unchanged</span>
+          <div class="text-2xl font-black text-slate-700 mt-1" id="count-unchanged">-</div>
+          <span class="text-[10px] text-slate-500">Hash Match</span>
+        </div>
+      </div>
+
+      <!-- Diff Filter Bar & Search -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+        <div class="flex items-center space-x-1.5 flex-wrap gap-y-1" id="diff-filter-buttons">
+          <button onclick="filterDiff('changed')" id="diff-filter-btn-changed" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">🔥 Changed Only (5)</button>
+          <button onclick="filterDiff('all')" id="diff-filter-btn-all" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">All (28)</button>
+          <button onclick="filterDiff('MODIFIED')" id="diff-filter-btn-MODIFIED" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Modified (4)</button>
+          <button onclick="filterDiff('ADDED')" id="diff-filter-btn-ADDED" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Added (1)</button>
+          <button onclick="filterDiff('REMOVED')" id="diff-filter-btn-REMOVED" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Removed (0)</button>
+          <button onclick="filterDiff('UNCHANGED')" id="diff-filter-btn-UNCHANGED" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Unchanged (23)</button>
+        </div>
+        <div class="flex items-center space-x-2">
+          <input type="text" id="diff-search" oninput="searchDiff(this.value)" placeholder="Filter diff items..." class="px-3 py-1 border border-slate-300 rounded-lg text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none w-56">
+          <button onclick="toggleAllDiffs()" class="text-xs px-2.5 py-1 text-slate-600 hover:text-slate-900 font-semibold border border-slate-200 rounded-lg bg-slate-50" id="btn-toggle-diffs">Collapse All</button>
+        </div>
+      </div>
+
+      <!-- Diff Items Container -->
+      <div id="diff-items-container" class="space-y-4">
+        <div class="text-center py-20 text-slate-400 bg-white rounded-xl border border-slate-200">
+          Loading comparison data...
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 3. SELECTIONS & QA TAB ==================== -->
+    <div id="view-qa" class="hidden space-y-6">
+      <!-- Pre-seeded & Saved QA Selector Banner -->
+      <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">QA</div>
+          <div>
+            <div class="font-bold text-sm text-indigo-950">Pre-Configured & Saved QA Suites</div>
+            <div class="text-xs text-indigo-700">Load existing validated test suites or generate fresh test ideas with bounded retry validation.</div>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <label class="text-xs font-semibold text-indigo-900">Load Suite:</label>
+          <select id="qa-saved-suites-dropdown" onchange="loadSavedQASuite(this.value)" class="bg-white border border-indigo-300 rounded-lg px-3 py-1.5 text-xs font-semibold text-indigo-900 focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="">-- Choose a Saved Suite --</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Selection Creator Form -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h2 class="text-md font-bold text-slate-900">1. Select Target Sections</h2>
+            <span class="text-[11px] font-semibold text-slate-500 font-mono" id="qa-selected-counter">2 selected</span>
+          </div>
+          
+          <div>
+            <label class="text-xs font-semibold text-slate-600 block mb-1">Selection Name</label>
+            <input type="text" id="qa-selection-name" value="Critical Safety & Inflation Workflow" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
+          </div>
+
+          <!-- Quick Preset Buttons -->
+          <div class="flex flex-wrap gap-1.5 pt-1">
+            <button onclick="applyQAPreset('safety')" class="text-[11px] px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium">Safety Preset</button>
+            <button onclick="applyQAPreset('errors')" class="text-[11px] px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium">Error Codes Preset</button>
+            <button onclick="applyQAPreset('all')" class="text-[11px] px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium">Select All</button>
+            <button onclick="applyQAPreset('clear')" class="text-[11px] px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium">Clear</button>
+          </div>
+
+          <div>
+            <label class="text-xs font-semibold text-slate-600 block mb-1">Include Sections from v1</label>
+            <div id="qa-nodes-checkboxes" class="h-64 overflow-y-auto space-y-1.5 border border-slate-200 p-2.5 rounded-lg text-xs bg-slate-50/50"></div>
+          </div>
+
+          <button onclick="createSelectionAndGenerateQA()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition flex items-center justify-center space-x-2 shadow-xs" id="btn-generate-qa">
+            <span>✨ Synthesize Grounded QA Ideas</span>
+          </button>
+        </div>
+
+        <!-- QA Results Cards -->
+        <div class="md:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h2 class="text-md font-bold text-slate-900">2. Generated QA Test Ideas (3–5 Strictly Grounded)</h2>
+              <div class="text-xs text-slate-400 mt-0.5" id="qa-suite-title">Select a suite or generate new test ideas</div>
+            </div>
+            <span id="qa-status-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">Idle</span>
+          </div>
+
+          <div id="qa-cards-container" class="space-y-4">
+            <div class="text-center text-slate-400 py-24">Click "Synthesize Grounded QA Ideas" or choose a pre-saved suite above to inspect validated test cases.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 4. STALENESS TAB ==================== -->
+    <div id="view-staleness" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <h2 class="text-lg font-bold text-slate-900">Artifact Staleness & Impact Engine</h2>
+            <span class="text-xs px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 font-semibold border border-rose-200">Continuous Audit</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">Evaluates all existing QA test suites against target documentation (v2) to flag content drift, removed sections, and parameter modifications.</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <div class="flex items-center space-x-2 text-xs text-slate-600">
+            <span>Target Version:</span>
+            <span class="font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded border border-indigo-200">v2 (7 pages)</span>
+          </div>
+          <button onclick="loadStaleness()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition flex items-center space-x-1.5 shadow-xs">
+            <span>⚡ Re-Evaluate Staleness</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Staleness Metric Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="staleness-summary-metrics">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-lg">📊</div>
+          <div>
+            <div class="text-xs font-semibold text-slate-500">Evaluated Artifacts</div>
+            <div class="text-2xl font-black text-slate-800" id="staleness-count-total">-</div>
+          </div>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-rose-200 bg-rose-50/20 shadow-xs flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-lg">⚠️</div>
+          <div>
+            <div class="text-xs font-semibold text-rose-700">Stale (Action Required)</div>
+            <div class="text-2xl font-black text-rose-800" id="staleness-count-stale">-</div>
+          </div>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-emerald-200 bg-emerald-50/20 shadow-xs flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg">✅</div>
+          <div>
+            <div class="text-xs font-semibold text-emerald-700">Verified Valid</div>
+            <div class="text-2xl font-black text-emerald-800" id="staleness-count-valid">-</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Staleness Results Container -->
+      <div id="staleness-container" class="space-y-4">
+        <div class="text-center text-slate-400 py-20 bg-white rounded-xl border border-slate-200">
+          Loading staleness analysis...
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==================== JAVASCRIPT APPLICATION CORE ==================== -->
+  <script>
+    let activeVersion = 'v1';
+    let allFlatNodes = [];
+    let selectedNodeId = null;
+    let cachedComparisons = [];
+    let currentDiffFilter = 'changed';
+    let allDiffsExpanded = true;
+    let savedSelections = [];
+
+    // Tab Navigation
+    function switchTab(tabId) {
+      ['explorer', 'diff', 'qa', 'staleness'].forEach(t => {
+        const viewEl = document.getElementById(`view-${t}`);
+        const tabEl = document.getElementById(`tab-${t}`);
+        if (viewEl) viewEl.classList.add('hidden');
+        if (tabEl) {
+          tabEl.classList.remove('border-indigo-600', 'text-indigo-600');
+          tabEl.classList.add('border-transparent', 'text-slate-500');
+        }
+      });
+
+      const activeView = document.getElementById(`view-${tabId}`);
+      const activeTab = document.getElementById(`tab-${tabId}`);
+      if (activeView) activeView.classList.remove('hidden');
+      if (activeTab) {
+        activeTab.classList.add('border-indigo-600', 'text-indigo-600');
+        activeTab.classList.remove('border-transparent', 'text-slate-500');
+      }
+
+      if (tabId === 'diff') {
+        if (cachedComparisons.length === 0) loadDiff();
+      }
+      if (tabId === 'qa') {
+        loadSavedSelections();
+      }
+      if (tabId === 'staleness') {
+        loadStaleness();
+      }
+    }
+
+    // ==================== 1. DOCUMENT EXPLORER ====================
+    async function loadSections() {
+      activeVersion = document.getElementById('explorer-version').value;
+      const statusEl = document.getElementById('explorer-status');
+      statusEl.textContent = 'Loading hierarchy tree...';
+      try {
+        const resp = await fetch(`/api/v1/documents/${activeVersion}/tree`);
+        const tree = await resp.json();
+        
+        allFlatNodes = [];
+        function flatten(nodes) {
+          nodes.forEach(n => {
+            allFlatNodes.push(n);
+            if (n.children && n.children.length > 0) flatten(n.children);
+          });
+        }
+        flatten(tree);
+        statusEl.textContent = `${allFlatNodes.length} nodes loaded`;
+        document.getElementById('sidebar-count').textContent = `${allFlatNodes.length} nodes`;
+
+        renderSidebarTree(tree);
+        populateQACheckboxes(allFlatNodes);
+
+        if (allFlatNodes.length > 0) {
+          loadSectionDetail(allFlatNodes[0].id);
+        }
+      } catch (err) {
+        statusEl.textContent = 'Failed to load document tree';
+      }
+    }
+
+    function renderSidebarTree(nodes, filterQuery = '') {
+      const listEl = document.getElementById('sections-list');
+      listEl.innerHTML = '';
+
+      function walkAndRender(nodeList, depth = 0) {
+        nodeList.forEach(n => {
+          const matchesQuery = !filterQuery || 
+            (n.title && n.title.toLowerCase().includes(filterQuery.toLowerCase())) ||
+            (n.section_number && n.section_number.toLowerCase().includes(filterQuery.toLowerCase())) ||
+            (n.full_text && n.full_text.toLowerCase().includes(filterQuery.toLowerCase()));
+
+          if (matchesQuery) {
+            const item = document.createElement('div');
+            item.id = `sidebar-node-${n.id}`;
+            const isRoot = depth === 0;
+            const indent = depth === 0 ? 'pl-3' : depth === 1 ? 'pl-6' : 'pl-9';
+            const fontStyle = isRoot ? 'font-bold text-slate-900 bg-slate-50/80 border-l-2 border-indigo-600' : 'font-normal text-slate-700 hover:bg-indigo-50/50';
+            
+            item.className = `py-2 pr-3 ${indent} ${fontStyle} cursor-pointer transition border-b border-slate-100/70 flex items-center justify-between text-xs`;
+            item.innerHTML = `
+              <div class="truncate pr-2 flex items-center space-x-1.5">
+                <span class="${isRoot ? 'text-indigo-800' : 'text-slate-400 font-mono'} text-[11px] font-semibold">${n.section_number ? n.section_number : '•'}</span>
+                <span class="truncate">${n.title}</span>
+              </div>
+              <span class="text-[10px] text-slate-400 font-mono shrink-0">P${n.page_start}</span>
+            `;
+            item.onclick = () => {
+              document.querySelectorAll('#sections-list > div').forEach(el => el.classList.remove('bg-indigo-50', 'text-indigo-900', 'font-semibold'));
+              item.classList.add('bg-indigo-50', 'text-indigo-900', 'font-semibold');
+              loadSectionDetail(n.id);
+            };
+            listEl.appendChild(item);
+          }
+
+          if (n.children && n.children.length > 0) {
+            walkAndRender(n.children, depth + 1);
+          }
+        });
+      }
+
+      // Reconstruct tree from flat nodes if filtering
+      if (filterQuery) {
+        allFlatNodes.forEach(n => {
+          const matches = (n.title && n.title.toLowerCase().includes(filterQuery.toLowerCase())) ||
+                          (n.section_number && n.section_number.toLowerCase().includes(filterQuery.toLowerCase())) ||
+                          (n.full_text && n.full_text.toLowerCase().includes(filterQuery.toLowerCase()));
+          if (matches) {
+            const item = document.createElement('div');
+            item.className = `py-2 px-3 text-xs cursor-pointer hover:bg-indigo-50 border-b border-slate-100 flex items-center justify-between`;
+            item.innerHTML = `
+              <div class="truncate pr-2">
+                <span class="font-bold text-indigo-700">${n.section_number || '•'}</span>
+                <span class="text-slate-800 ml-1 font-medium">${n.title}</span>
+              </div>
+              <span class="text-[10px] text-slate-400 font-mono">P${n.page_start}</span>
+            `;
+            item.onclick = () => loadSectionDetail(n.id);
+            listEl.appendChild(item);
+          }
+        });
+      } else {
+        walkAndRender(nodes);
+      }
+    }
+
+    function filterExplorerNodes(query) {
+      if (!query.trim()) {
+        fetch(`/api/v1/documents/${activeVersion}/tree`)
+          .then(r => r.json())
+          .then(tree => renderSidebarTree(tree));
+      } else {
+        renderSidebarTree([], query.trim());
+      }
+    }
+
+    async function loadSectionDetail(nodeId) {
+      selectedNodeId = nodeId;
+      const detailEl = document.getElementById('section-detail');
+      detailEl.innerHTML = '<div class="text-center py-20 text-slate-400">Loading section details...</div>';
+      try {
+        const resp = await fetch(`/api/v1/documents/${activeVersion}/nodes/${nodeId}`);
+        const n = await resp.json();
+        
+        let tablesHtml = '';
+        if (n.tables && n.tables.length > 0) {
+          tablesHtml = `
+            <div class="mt-4 pt-4 border-t border-slate-100">
+              <div class="font-semibold text-xs uppercase tracking-wider text-slate-500 mb-2">📊 Extracted Specifications & Status Table (${n.tables.length})</div>
+              <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                <table class="w-full text-left text-xs divide-y divide-slate-200">
+                  <thead class="bg-slate-50 font-bold text-slate-700">
+                    <tr>${n.tables[0].headers.map(h => `<th class="p-2.5">${h}</th>`).join('')}</tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 bg-white">
+                    ${n.tables[0].rows.map(r => `<tr>${r.map(c => `<td class="p-2.5">${c}</td>`).join('')}</tr>`).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }
+
+        let warningsHtml = '';
+        if (n.extraction_warnings && n.extraction_warnings.length > 0) {
+          warningsHtml = `
+            <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 space-y-1">
+              <div class="font-bold">⚠️ Extraction Warnings & Boundary Observations:</div>
+              ${n.extraction_warnings.map(w => `<div>• ${w}</div>`).join('')}
+            </div>
+          `;
+        }
+
+        let childrenCardsHtml = '';
+        if (n.children && n.children.length > 0) {
+          childrenCardsHtml = `
+            <div class="mt-6 pt-4 border-t border-slate-200">
+              <div class="font-bold text-xs uppercase tracking-wider text-slate-600 mb-3 flex items-center space-x-1.5">
+                <span>📑 Subsections in this Chapter (${n.children.length})</span>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                ${n.children.map(c => `
+                  <div onclick="loadSectionDetail('${c.id}')" class="p-3 bg-white border border-slate-200 hover:border-indigo-500 hover:shadow-xs rounded-xl cursor-pointer transition space-y-1 group">
+                    <div class="font-bold text-indigo-700 text-xs group-hover:text-indigo-900">${c.section_number ? c.section_number + '.' : ''} ${c.title}</div>
+                    <div class="text-[11px] text-slate-500 line-clamp-2">${c.full_text || '(Contains specification tables and operational procedures)'}</div>
+                    <div class="text-[10px] text-slate-400 flex items-center justify-between pt-1">
+                      <span>Pages ${c.page_start}-${c.page_end}</span>
+                      <span class="text-indigo-600 font-semibold group-hover:underline">Read Subsection →</span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        let bodyTextHtml = '';
+        if (n.full_text && n.full_text.trim()) {
+          bodyTextHtml = `
+            <div class="prose prose-sm max-w-none text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50/50 p-4 rounded-lg border border-slate-100">
+              ${n.full_text}
+            </div>
+          `;
+        } else if (n.children && n.children.length > 0) {
+          bodyTextHtml = `
+            <div class="p-4 bg-indigo-50/50 border border-indigo-100 rounded-lg text-xs text-indigo-900 leading-relaxed">
+              <span class="font-bold">📂 Chapter Container:</span> This chapter organizes <strong>${n.children.length} subsections</strong>. Select any subsection from below or from the sidebar to inspect its text and tables.
+            </div>
+          `;
+        } else {
+          bodyTextHtml = `
+            <div class="p-4 bg-slate-50 rounded-lg text-xs text-slate-400 italic">No direct body text extracted for this node.</div>
+          `;
+        }
+
+        detailEl.innerHTML = `
+          <div class="space-y-4">
+            <div class="flex items-start justify-between border-b border-slate-100 pb-3">
+              <div>
+                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">Section ${n.section_number || 'Root'}</span>
+                <h2 class="text-xl font-bold text-slate-900 mt-1">${n.title}</h2>
+                <div class="text-xs text-slate-400 mt-1 font-mono">Logical ID: ${n.logical_id} | Hash: ${n.content_hash.slice(0, 16)}...</div>
+              </div>
+              <span class="text-xs px-2.5 py-1 bg-slate-100 text-slate-600 rounded font-medium">Pages ${n.page_start}–${n.page_end}</span>
+            </div>
+            ${warningsHtml}
+            ${bodyTextHtml}
+            ${tablesHtml}
+            ${childrenCardsHtml}
+          </div>
+        `;
+      } catch (err) {
+        detailEl.innerHTML = '<div class="text-center py-20 text-rose-500">Failed to load section detail</div>';
+      }
+    }
+
+    // ==================== 2. VERSION DIFF ENGINE ====================
+    async function loadDiff() {
+      const baseVer = document.getElementById('diff-base-version').value;
+      const targetVer = document.getElementById('diff-target-version').value;
+      const container = document.getElementById('diff-items-container');
+      
+      container.innerHTML = `
+        <div class="p-12 text-center bg-white rounded-xl border border-slate-200 space-y-2">
+          <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div class="text-sm font-semibold text-slate-700">Comparing ASTs & Computing Cryptographic Diffs...</div>
+          <div class="text-xs text-slate-400">${baseVer} vs ${targetVer}</div>
+        </div>
+      `;
+
+      try {
+        const resp = await fetch(`/api/v1/compare?base_version=${baseVer}&target_version=${targetVer}`);
+        const data = await resp.json();
+        
+        cachedComparisons = data.comparisons || [];
+        
+        // Update metric counters
+        const summary = data.summary || {};
+        const unchanged = summary.UNCHANGED || 0;
+        const modified = summary.MODIFIED || 0;
+        const added = summary.ADDED || 0;
+        const removed = summary.REMOVED || 0;
+        const total = data.total_target_nodes || cachedComparisons.length;
+        const changedTotal = modified + added + removed;
+
+        const setTxt = (id, val) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = val;
+        };
+
+        setTxt('count-total', total);
+        setTxt('count-changed', changedTotal);
+        setTxt('count-modified', modified);
+        setTxt('count-added', added);
+        setTxt('count-removed', removed);
+        setTxt('count-unchanged', unchanged);
+
+        // Update tab badge
+        const diffBadge = document.getElementById('diff-tab-badge');
+        if (diffBadge) diffBadge.textContent = `${changedTotal} Changes`;
+
+        // Update filter button labels
+        setTxt('diff-filter-btn-changed', `🔥 Changed Only (${changedTotal})`);
+        setTxt('diff-filter-btn-all', `All (${cachedComparisons.length})`);
+        setTxt('diff-filter-btn-MODIFIED', `Modified (${modified})`);
+        setTxt('diff-filter-btn-ADDED', `Added (${added})`);
+        setTxt('diff-filter-btn-REMOVED', `Removed (${removed})`);
+        setTxt('diff-filter-btn-UNCHANGED', `Unchanged (${unchanged})`);
+
+        // Render with current filter
+        filterDiff(currentDiffFilter);
+      } catch (err) {
+        console.error('loadDiff error:', err);
+        container.innerHTML = `
+          <div class="p-8 text-center bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-sm">
+            Failed to run comparison: ${escapeHtml(err.message || String(err))}. Please check application logs.
+          </div>
+        `;
+      }
+    }
+
+    function filterDiff(filterType) {
+      currentDiffFilter = filterType;
+      
+      // Update active filter button styling
+      ['changed', 'all', 'MODIFIED', 'ADDED', 'REMOVED', 'UNCHANGED'].forEach(f => {
+        const btn = document.getElementById(`diff-filter-btn-${f}`);
+        if (btn) {
+          if (f === filterType) {
+            btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-xs';
+          } else {
+            btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100';
+          }
+        }
+      });
+
+      const searchQuery = (document.getElementById('diff-search')?.value || '').toLowerCase().trim();
+      
+      let filtered = cachedComparisons.filter(c => {
+        // Type filter
+        if (filterType === 'changed') {
+          if (c.change_type === 'UNCHANGED') return false;
+        } else if (filterType !== 'all') {
+          if (c.change_type !== filterType) return false;
+        }
+        // Search filter
+        if (searchQuery) {
+          const matchTitle = (c.target_title || c.base_title || '').toLowerCase().includes(searchQuery);
+          const matchSec = (c.target_section_number || c.base_section_number || '').toLowerCase().includes(searchQuery);
+          const matchId = (c.logical_id || '').toLowerCase().includes(searchQuery);
+          return matchTitle || matchSec || matchId;
+        }
+        return true;
+      });
+
+      renderDiffList(filtered);
+    }
+
+    function searchDiff(query) {
+      filterDiff(currentDiffFilter);
+    }
+
+    function toggleAllDiffs() {
+      allDiffsExpanded = !allDiffsExpanded;
+      document.querySelectorAll('.diff-details-block').forEach(el => {
+        if (allDiffsExpanded) el.classList.remove('hidden');
+        else el.classList.add('hidden');
+      });
+      document.getElementById('btn-toggle-diffs').textContent = allDiffsExpanded ? 'Collapse All' : 'Expand All';
+    }
+
+    function renderDiffList(items) {
+      const container = document.getElementById('diff-items-container');
+      if (items.length === 0) {
+        container.innerHTML = `
+          <div class="p-12 text-center bg-white rounded-xl border border-slate-200 text-slate-400 text-sm">
+            No sections match the current filter or search criteria.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+      items.forEach((c, index) => {
+        const card = document.createElement('div');
+        
+        let typeBadgeClass = 'bg-slate-100 text-slate-700 border-slate-300';
+        let cardBorderClass = 'border-slate-200 bg-white';
+        let typeIcon = '🔒';
+
+        if (c.change_type === 'MODIFIED') {
+          typeBadgeClass = 'bg-amber-100 text-amber-900 border-amber-300';
+          cardBorderClass = 'border-amber-300 bg-amber-50/10 shadow-xs';
+          typeIcon = '✏️';
+        } else if (c.change_type === 'ADDED') {
+          typeBadgeClass = 'bg-emerald-100 text-emerald-900 border-emerald-300';
+          cardBorderClass = 'border-emerald-300 bg-emerald-50/10 shadow-xs';
+          typeIcon = '➕';
+        } else if (c.change_type === 'REMOVED') {
+          typeBadgeClass = 'bg-rose-100 text-rose-900 border-rose-300';
+          cardBorderClass = 'border-rose-300 bg-rose-50/10 shadow-xs';
+          typeIcon = '🗑️';
+        } else if (c.change_type === 'MOVED') {
+          typeBadgeClass = 'bg-purple-100 text-purple-900 border-purple-300';
+          cardBorderClass = 'border-purple-300 bg-purple-50/10 shadow-xs';
+          typeIcon = '↗️';
+        }
+
+        const title = c.target_title || c.base_title || 'Untitled';
+        const secNum = c.target_section_number || c.base_section_number || '';
+        
+        // Format syntax highlighted unified diff
+        let formattedDiffHtml = '';
+        if (c.unified_diff) {
+          const lines = c.unified_diff.split('\n');
+          const formattedLines = lines.map(line => {
+            if (line.startsWith('+') && !line.startsWith('+++')) {
+              return `<div class="diff-add px-2 py-0.5 rounded font-mono">${escapeHtml(line)}</div>`;
+            } else if (line.startsWith('-') && !line.startsWith('---')) {
+              return `<div class="diff-del px-2 py-0.5 rounded font-mono">${escapeHtml(line)}</div>`;
+            } else if (line.startsWith('@@')) {
+              return `<div class="diff-hunk px-2 py-0.5 rounded font-mono font-bold text-slate-600 my-1">${escapeHtml(line)}</div>`;
+            } else {
+              return `<div class="px-2 py-0.5 text-slate-600 font-mono">${escapeHtml(line)}</div>`;
+            }
+          }).join('');
+
+          formattedDiffHtml = `
+            <div class="mt-3 p-3 bg-slate-900 rounded-lg text-xs overflow-x-auto border border-slate-700 shadow-inner">
+              <div class="flex items-center justify-between text-slate-400 font-mono text-[11px] mb-2 border-b border-slate-700 pb-1.5">
+                <span>Unified Diff View</span>
+                <span>${c.diff_summary ? `+${c.diff_summary.added_lines} added / -${c.diff_summary.deleted_lines} deleted` : ''}</span>
+              </div>
+              <div class="space-y-0.5 text-slate-100 font-mono text-[11px] leading-relaxed">
+                ${formattedLines}
+              </div>
+            </div>
+          `;
+        }
+
+        card.className = `p-5 rounded-xl border ${cardBorderClass} transition space-y-3`;
+        card.innerHTML = `
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+            <div class="flex items-center space-x-2.5">
+              <span class="px-2.5 py-1 rounded-md text-xs font-bold border ${typeBadgeClass} flex items-center space-x-1">
+                <span>${typeIcon}</span>
+                <span>${c.change_type}</span>
+              </span>
+              <span class="font-bold text-slate-900 text-sm">
+                ${secNum ? 'Section ' + secNum + ': ' : ''}${title}
+              </span>
+            </div>
+            <div class="flex items-center space-x-3 text-xs text-slate-500 font-mono">
+              <span>Logical ID: <strong class="text-slate-700">${c.logical_id}</strong></span>
+              <span class="px-2 py-0.5 rounded bg-slate-100 font-semibold">Match: ${Math.round(c.matching_confidence * 100)}%</span>
+            </div>
+          </div>
+
+          <div class="text-xs text-slate-600 flex items-center justify-between">
+            <div>
+              <span class="font-semibold text-slate-800">Observation:</span> ${c.explanation || 'No change detected.'}
+            </div>
+            <div class="text-[11px] text-slate-400 font-mono">
+              ${c.base_hash ? `v1: ${c.base_hash.slice(0, 8)}...` : ''} 
+              ${c.target_hash ? `→ v2: ${c.target_hash.slice(0, 8)}...` : ''}
+            </div>
+          </div>
+
+          <div class="diff-details-block ${allDiffsExpanded ? '' : 'hidden'}">
+            ${formattedDiffHtml}
+            ${c.change_type === 'ADDED' ? `
+              <div class="mt-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-900 leading-relaxed">
+                <span class="font-bold">✨ New Section Ingested:</span> Section 5.3 introduces the Data Export protocol to the CT200 manual v2 specification.
+              </div>
+            ` : ''}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // ==================== 3. SELECTIONS & QA SYNTHESIS ====================
+    function populateQACheckboxes(nodes) {
+      const boxContainer = document.getElementById('qa-nodes-checkboxes');
+      boxContainer.innerHTML = '';
+      const list = nodes && nodes.length > 0 ? nodes : allFlatNodes;
+      
+      list.forEach(s => {
+        const isChecked = ['4.1', '4.2'].includes(s.section_number);
+        const div = document.createElement('label');
+        div.className = 'flex items-center space-x-2 p-1 hover:bg-white rounded cursor-pointer border border-transparent hover:border-slate-200 transition';
+        div.innerHTML = `
+          <input type="checkbox" value="${s.id}" ${isChecked ? 'checked' : ''} onchange="updateQACounter()" class="qa-node-cb rounded text-indigo-600 focus:ring-indigo-500">
+          <span class="text-slate-700 truncate font-medium">${s.section_number ? s.section_number + '.' : ''} ${s.title}</span>
+        `;
+        boxContainer.appendChild(div);
+      });
+      updateQACounter();
+    }
+
+    function updateQACounter() {
+      const checked = document.querySelectorAll('.qa-node-cb:checked').length;
+      document.getElementById('qa-selected-counter').textContent = `${checked} selected`;
+    }
+
+    function applyQAPreset(preset) {
+      const cbs = document.querySelectorAll('.qa-node-cb');
+      if (preset === 'clear') {
+        cbs.forEach(cb => cb.checked = false);
+      } else if (preset === 'all') {
+        cbs.forEach(cb => cb.checked = true);
+      } else if (preset === 'safety') {
+        cbs.forEach(cb => {
+          const text = cb.parentElement.textContent;
+          cb.checked = text.includes('2.1') || text.includes('3.2') || text.includes('4.1');
+        });
+      } else if (preset === 'errors') {
+        cbs.forEach(cb => {
+          const text = cb.parentElement.textContent;
+          cb.checked = text.includes('4.2') || text.includes('4.3') || text.includes('7.1');
+        });
+      }
+      updateQACounter();
+    }
+
+    async function loadSavedSelections() {
+      try {
+        const resp = await fetch('/api/v1/selections');
+        savedSelections = await resp.json();
+        
+        const dropdown = document.getElementById('qa-saved-suites-dropdown');
+        dropdown.innerHTML = '<option value="">-- Choose a Saved Suite --</option>';
+        
+        savedSelections.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = `${s.name} (${s.node_count} nodes - ${s.document_version})`;
+          dropdown.appendChild(opt);
+        });
+
+        // Automatically load first selection if available
+        if (savedSelections.length > 0 && !dropdown.value) {
+          dropdown.value = savedSelections[0].id;
+          loadSavedQASuite(savedSelections[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to load saved selections', err);
+      }
+    }
+
+    async function loadSavedQASuite(selectionId) {
+      if (!selectionId) return;
+      const statusBadge = document.getElementById('qa-status-badge');
+      const cardsContainer = document.getElementById('qa-cards-container');
+      const titleEl = document.getElementById('qa-suite-title');
+      
+      statusBadge.textContent = 'Loading suite...';
+      statusBadge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-medium animate-pulse';
+
+      try {
+        // Fetch QA artifact for this selection
+        const resp = await fetch(`/api/v1/qa-artifacts?selection_id=${selectionId}`);
+        const artifacts = await resp.json();
+
+        if (artifacts.length === 0) {
+          statusBadge.textContent = 'No artifact generated yet';
+          statusBadge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium';
+          cardsContainer.innerHTML = '<div class="text-center text-slate-400 py-20">Click "Synthesize Grounded QA Ideas" to generate test cases for this selection.</div>';
+          return;
+        }
+
+        // Fetch full artifact details
+        const artResp = await fetch(`/api/v1/qa-artifacts/${artifacts[0].id}`);
+        const art = await artResp.json();
+        
+        const selObj = savedSelections.find(s => s.id === selectionId);
+        titleEl.textContent = `${selObj ? selObj.name : 'Selection'} • ${art.test_cases.length} Grounded Test Cases`;
+        statusBadge.textContent = `Validated (${art.validation_status})`;
+        statusBadge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-medium';
+
+        renderQACards(art.test_cases);
+      } catch (err) {
+        statusBadge.textContent = 'Failed to load suite';
+        statusBadge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-medium';
+      }
+    }
+
+    async function createSelectionAndGenerateQA() {
+      const checkedBoxes = Array.from(document.querySelectorAll('.qa-node-cb:checked')).map(cb => cb.value);
+      if (checkedBoxes.length === 0) {
+        alert('Please select at least one section checkbox.');
+        return;
+      }
+
+      const statusBadge = document.getElementById('qa-status-badge');
+      const cardsContainer = document.getElementById('qa-cards-container');
+      statusBadge.textContent = 'Synthesizing grounded tests...';
+      statusBadge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-medium animate-pulse';
+
+      try {
+        // 1. Create selection
+        const selResp = await fetch('/api/v1/selections', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            name: document.getElementById('qa-selection-name').value,
+            document_version: 'v1',
+            node_ids: checkedBoxes
+          })
+        });
+        const sel = await selResp.json();
+
+        // 2. Generate QA
+        const genResp = await fetch(`/api/v1/selections/${sel.id}/generate-qa`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({force_regenerate: true})
+        });
+        const art = await genResp.json();
+
+        statusBadge.textContent = `Generated ${art.test_cases.length} Grounded Tests (${art.validation_status})`;
+        statusBadge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-medium';
+        document.getElementById('qa-suite-title').textContent = `${sel.name} • Strictly Grounded Output`;
+
+        renderQACards(art.test_cases);
+        loadSavedSelections();
+      } catch (err) {
+        statusBadge.textContent = 'Generation Encountered Error';
+        statusBadge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-medium';
+        alert('QA Generation encountered an error. Check application logs.');
+      }
+    }
+
+    function renderQACards(testCases) {
+      const cardsContainer = document.getElementById('qa-cards-container');
+      cardsContainer.innerHTML = '';
+      
+      testCases.forEach((tc, i) => {
+        const card = document.createElement('div');
+        card.className = 'p-5 bg-white border border-slate-200 rounded-xl space-y-3 shadow-xs';
+        card.innerHTML = `
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-100 pb-2">
+            <span class="font-extrabold text-indigo-700 text-sm tracking-wide">${tc.test_id}</span>
+            <div class="flex items-center space-x-1.5 flex-wrap">
+              <span class="text-[10px] font-bold uppercase text-slate-400">Sources:</span>
+              ${tc.source_references.map(s => `<span class="text-[11px] px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded font-mono font-medium">${s}</span>`).join('')}
+            </div>
+          </div>
+          <div>
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Test Objective</div>
+            <div class="text-sm font-semibold text-slate-800 mt-0.5">${tc.test_objective}</div>
+          </div>
+          <div>
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Preconditions</div>
+            <ul class="list-disc list-inside text-xs text-slate-600 mt-1 space-y-0.5">${tc.preconditions.map(p => `<li>${p}</li>`).join('')}</ul>
+          </div>
+          <div>
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Execution Steps</div>
+            <ol class="list-decimal list-inside text-xs text-slate-600 mt-1 space-y-1">${tc.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+          </div>
+          <div class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-lg">
+            <span class="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Expected Grounded Result:</span>
+            <div class="text-xs text-emerald-950 mt-1 font-medium leading-relaxed">${tc.expected_result}</div>
+          </div>
+        `;
+        cardsContainer.appendChild(card);
+      });
+    }
+
+    // ==================== 4. STALENESS & IMPACT ====================
+    async function loadStaleness() {
+      const container = document.getElementById('staleness-container');
+      container.innerHTML = '<div class="text-center py-20 text-slate-400 bg-white rounded-xl border border-slate-200">Evaluating staleness across all QA artifacts against v2...</div>';
+      try {
+        const resp = await fetch('/api/v1/staleness?target_version=v2');
+        const data = await resp.json();
+        
+        if (data.results.length === 0) {
+          container.innerHTML = '<div class="text-center py-20 text-slate-400 bg-white rounded-xl border border-slate-200">No QA artifacts evaluated yet. Go to the "Selections & QA Generator" tab first.</div>';
+          return;
+        }
+
+        const totalArtifacts = data.results.length;
+        const staleCount = data.results.filter(r => r.is_stale).length;
+        const validCount = totalArtifacts - staleCount;
+
+        document.getElementById('staleness-count-total').textContent = totalArtifacts;
+        document.getElementById('staleness-count-stale').textContent = staleCount;
+        document.getElementById('staleness-count-valid').textContent = validCount;
+
+        const staleBadge = document.getElementById('staleness-tab-badge');
+        if (staleBadge) staleBadge.textContent = `${staleCount} Stale`;
+
+        container.innerHTML = '';
+        data.results.forEach(res => {
+          const card = document.createElement('div');
+          card.className = `p-6 rounded-xl border shadow-xs space-y-4 ${res.is_stale ? 'bg-rose-50/20 border-rose-200' : 'bg-emerald-50/20 border-emerald-200'}`;
+          
+          let affectedListHtml = '';
+          if (res.reasons.length > 0) {
+            affectedListHtml = `
+              <div class="space-y-2 pt-2">
+                <div class="text-xs font-bold text-slate-600 uppercase tracking-wide">Impacted Nodes (${res.reasons.length}/${res.total_source_nodes}):</div>
+                ${res.reasons.map(r => `
+                  <div class="p-3.5 bg-white rounded-lg border border-slate-200 text-xs space-y-2 shadow-2xs">
+                    <div class="flex items-center justify-between">
+                      <span class="font-bold text-slate-900 font-mono">${r.logical_id}</span>
+                      <span class="text-[11px] font-bold px-2 py-0.5 rounded ${r.severity === 'HIGH' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}">
+                        ${r.drift_type} (${r.severity})
+                      </span>
+                    </div>
+                    <div class="text-slate-600">${r.description}</div>
+                    ${r.text_diff ? `
+                      <div class="p-2.5 bg-slate-900 text-slate-200 rounded font-mono text-[11px] whitespace-pre overflow-x-auto shadow-inner leading-relaxed">
+                        ${escapeHtml(r.text_diff)}
+                      </div>
+                    ` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          }
+
+          card.innerHTML = `
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-200 pb-3">
+              <div class="flex items-center space-x-3">
+                <span class="px-3 py-1 rounded-md text-xs font-extrabold tracking-wide ${res.is_stale ? 'bg-rose-600 text-white' : 'bg-emerald-600 text-white'} shadow-xs">
+                  ${res.is_stale ? '⚠️ STALE SUITE' : '✅ VERIFIED VALID'}
+                </span>
+                <span class="font-bold text-slate-900 text-sm">Artifact: <span class="font-mono">${res.artifact_id}</span></span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="text-xs px-2.5 py-1 rounded font-bold ${res.overall_severity === 'HIGH' ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-slate-100 text-slate-600'}">
+                  Impact Severity: ${res.overall_severity}
+                </span>
+              </div>
+            </div>
+            
+            <div class="text-xs text-slate-700 bg-white p-3 rounded-lg border border-slate-200">
+              <span class="font-bold text-slate-900">Recommendation:</span> ${res.recommendation}
+            </div>
+
+            ${affectedListHtml}
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        container.innerHTML = '<div class="text-center py-20 text-rose-500">Failed to evaluate staleness</div>';
+      }
+    }
+
+    // Auto load sections on boot
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSections();
+      // Pre-fetch diff data so badge is ready
+      fetch('/api/v1/compare?base_version=v1&target_version=v2')
+        .then(r => r.json())
+        .then(data => {
+          cachedComparisons = data.comparisons || [];
+          const changed = (data.summary?.MODIFIED || 0) + (data.summary?.ADDED || 0);
+          const badge = document.getElementById('diff-tab-badge');
+          if (badge) badge.textContent = `${changed} Changes`;
+        })
+        .catch(() => {});
+    });
+  </script>
+</body>
+</html>
